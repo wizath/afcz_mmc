@@ -69,52 +69,8 @@ void phy_init(void)
 	PINSEL_ConfigPin(1, 16, 1);
 	PINSEL_ConfigPin(1, 17, 1);
 
-//	Emac_Config.PhyCfg.Mode = EMAC_MODE_AUTO;
-//	EMAC_Init( &Emac_Config );
-
-	CLKPWR_ConfigPPWR(CLKPWR_PCONP_PCENET, ENABLE);
-
-	/* Reset all EMAC internal modules */
-	LPC_EMAC->MAC1    = EMAC_MAC1_RES_TX | EMAC_MAC1_RES_MCS_TX | EMAC_MAC1_RES_RX |
-						EMAC_MAC1_RES_MCS_RX | EMAC_MAC1_SIM_RES | EMAC_MAC1_SOFT_RES;
-
-	LPC_EMAC->Command = EMAC_CR_REG_RES | EMAC_CR_TX_RES | EMAC_CR_RX_RES | EMAC_CR_PASS_RUNT_FRM;
-
-	/* A short delay after reset. */
-//	vTaskDelay( 2 );
-	delay_ms(100);
-//	/* Initialize MAC control registers. */
-//	LPC_EMAC->MAC1 = EMAC_MAC1_PASS_ALL;
-//	LPC_EMAC->MAC2 = EMAC_MAC2_CRC_EN | EMAC_MAC2_PAD_EN;
-//	LPC_EMAC->MAXF = EMAC_ETH_MAX_FLEN;
-//
-//	/*
-//	 * Find the clock that close to desired target clock
-//	 */
-//	tmp = CLKPWR_GetCLK(CLKPWR_CLKTYPE_CPU) / EMAC_MCFG_MII_MAXCLK;
-//	for (tout = 0; tout < sizeof (EMAC_clkdiv); tout++){
-//		if (EMAC_clkdiv[tout] >= tmp) break;
-//	}
-//	tout++;
-//
-//	// Write to MAC configuration register and reset
-//	LPC_EMAC->MCFG = EMAC_MCFG_CLK_SEL(tout) | EMAC_MCFG_RES_MII;
-//
-//	// release reset
-//	LPC_EMAC->MCFG &= ~(EMAC_MCFG_RES_MII);
-//	LPC_EMAC->CLRT = EMAC_CLRT_DEF;
-//	LPC_EMAC->IPGR = EMAC_IPGR_P2_DEF;
-//
-//	/* Enable Reduced MII interface. */
-//	LPC_EMAC->Command = EMAC_CR_RMII | EMAC_CR_PASS_RUNT_FRM;
-//
-//	/* Reset Reduced MII Logic. */
-//	LPC_EMAC->SUPP = 0x00000800;
-//
-//	for (tout = 100; tout; tout--);
-//	LPC_EMAC->SUPP = 0;
-
-//	vTaskDelay(100);
+	Emac_Config.PhyCfg.Mode = EMAC_MODE_AUTO;
+	EMAC_Init( &Emac_Config );
 }
 
 int32_t read_PHY (uint16_t bPhyAddr, uint32_t PhyReg)
@@ -122,7 +78,7 @@ int32_t read_PHY (uint16_t bPhyAddr, uint32_t PhyReg)
 	/* Read a PHY register 'PhyReg'. */
 	uint32_t tout;
 
-	LPC_EMAC->MADR = ((bPhyAddr & 0x1F) << 8 ) | (PhyReg & 0x1F);
+	LPC_EMAC->MADR = ((bPhyAddr & 0x1F) << 8) | (PhyReg & 0x1F);
 	LPC_EMAC->MCMD = EMAC_MCMD_READ;
 
 	/* Wait until operation completed */
@@ -208,8 +164,8 @@ void network_init(void *arg)
 	IP4_ADDR(&ipaddr, 0, 0, 0, 0);
 	IP4_ADDR(&netmask, 0, 0, 0, 0);
 #else
-	IP4_ADDR(&gw, 10, 1, 10, 1);
-	IP4_ADDR(&ipaddr, 10, 1, 10, 234);
+	IP4_ADDR(&gw, 192, 168, 95, 254);
+	IP4_ADDR(&ipaddr, 192, 168, 95, 99);
 	IP4_ADDR(&netmask, 255, 255, 255, 0);
 #endif
 
@@ -240,32 +196,32 @@ static void vSetupIFTask(void *pvParameters) {
 		vTaskDelay(configTICK_RATE_HZ / 1000);
 	}
 
-	//DEBUGSTR("Starting LWIP HTTP server...\r\n");
+	DEBUGSTR("Starting LWIP HTTP server...\r\n");
 
 	/* Initialize and start application */
-	http_server_netconn_init();
+//	http_server_netconn_init();
 
 	/* This loop monitors the PHY link and will handle cable events
 	   via the PHY driver. */
 	phystsprev = 0;
 	while (1)
 	{
-//		physts = EMAC_CheckPHYStatus(EMAC_PHY_STAT_LINK);
-//
-//		if (physts != phystsprev)
-//		{
-//			phystsprev = physts;
-//			if (physts == 1)
-//			{
-//				printf("Net up\n");
-//				tcpip_callback_with_block((tcpip_callback_fn) netif_set_link_up,
-//														  (void *) &net_iface, 1);
-//			} else {
-//				printf("Net down\n");
-//				tcpip_callback_with_block((tcpip_callback_fn) netif_set_link_down,
-//														  (void *) &net_iface, 1);
-//			}
-//		}
+		physts = EMAC_CheckPHYStatus(EMAC_PHY_STAT_LINK);
+
+		if (physts != phystsprev)
+		{
+			phystsprev = physts;
+			if (physts == 1)
+			{
+				printf("Net up\n");
+				tcpip_callback_with_block((tcpip_callback_fn) netif_set_link_up,
+														  (void *) &net_iface, 1);
+			} else {
+				printf("Net down\n");
+				tcpip_callback_with_block((tcpip_callback_fn) netif_set_link_down,
+														  (void *) &net_iface, 1);
+			}
+		}
 
 		vTaskDelay(configTICK_RATE_HZ / 4);
 	}
@@ -611,7 +567,7 @@ static void prvSetupHardware(void)
 	gpio_pre_pwr_init();
 
 	uart_init();
-	cli_init();
+//	cli_init();
 	i2c_init();
 	spi_init();
 }
@@ -626,19 +582,16 @@ int main(void)
 	psu_init();
 	delay_ms(200);
 
-	printf("xr start\r\n");
-	xr77129_load_runtimes();
+//	printf("xr start\r\n");
+//	xr77129_load_runtimes();
 
 //	i2c_probe_slaves2(); // probe i2cmux slaves at every channel
 	printf("XR END\r\n");
 	delay_ms(100);
 
 	LPC_GPIO0->DIR |= (1 << 23); // Switch RESETn
-
 	LPC_GPIO4->SET |= (1 << 18); //initialize SCANSTA
-
 	LPC_GPIO4->DIR |= (1 << 18);// scansta  reset
-
 	LPC_GPIO4->DIR |= (1 << 25);//lpsel0 PROG master
 	LPC_GPIO4->DIR |= (1 << 26);//lpsel1 MMC JTAG
 	LPC_GPIO4->DIR |= (1 << 27);//lpsel2 FPGA JTAG
@@ -697,6 +650,7 @@ int main(void)
 //  	LPC_GPIO4->CLR |= (1 << 30);//lpsel5 RTM JTAG
   	LPC_GPIO4->CLR |= (1 << 31);//lpsel6 PS JTAG
   	LPC_GPIO4->CLR |= (1 << 19);//stitcher mode
+
     //check if RTM is connected  RTM_PSn is low
 	if (LPC_GPIO0->PIN &(1 << 29))
 	{
@@ -717,7 +671,7 @@ int main(void)
 
 	LPC_GPIO0->SET |= (1 << 23); // release Ethernet switch RESETn
 	LPC_GPIO0->DIR |= (1 << 31); // MDIO enable line
-	LPC_GPIO0->SET |= (1 << 31); // connect Ethernet switch to ZYNQ
+	LPC_GPIO0->CLR |= (1 << 31); // connect Ethernet switch to ZYNQ
 
 
 //			  	LPC_GPIO4->SET |= (1 << 18); //initialize SCANSTA
@@ -767,9 +721,21 @@ int main(void)
            }
 
 
+           LPC_GPIO0->CLR |= (1 << 23);
+           delay_ms(200);
+           LPC_GPIO0->SET |= (1 << 23);
 //           spi_flash_tests();
-//           phy_init();
+           phy_init();
 //           phy_scan();
+
+           int i = 0x10;
+	   write_PHY(i, 22, 0x00);
+	   for (int j = 0; j < 10; j++) {
+		   delay_ms(5);
+		   uint32_t val = read_PHY(i, j);
+		   printf("PHY [0x%02X] Reg %X = %d\r\n", i, j, val);
+	   }
+	   delay_ms(1);
 
 	/* First record in log also initialize it */
  	printf("Started. CPU clock = %lu MHz, SDRAM clock = %lu Mhz\n", SystemCoreClock / 1000000u, EMCClock / 1000000u);
@@ -779,7 +745,7 @@ int main(void)
 	xTaskCreate(vSetupIFTask, (signed char *) "SetupIFx", configMINIMAL_STACK_SIZE, NULL, (tskIDLE_PRIORITY + 2UL), (xTaskHandle *) NULL);
 	//blink LED task
 	xTaskCreate(vblinkIFTask, "Blink", configMINIMAL_STACK_SIZE, NULL, (tskIDLE_PRIORITY + 1UL), (xTaskHandle *) NULL);
-	xTaskCreate(vCommandConsoleTask, "CLI", configMINIMAL_STACK_SIZE + 256UL, NULL, tskIDLE_PRIORITY + 1, NULL );
+//	xTaskCreate(vCommandConsoleTask, "CLI", configMINIMAL_STACK_SIZE + 256UL, NULL, tskIDLE_PRIORITY + 1, NULL );
 
 	vTaskStartScheduler();
 	return 1;

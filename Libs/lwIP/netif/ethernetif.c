@@ -162,16 +162,26 @@ EMAC_CFG_Type Emac_Config;
 	 * P1.17 - ENET_MDIO
 	 */
 	/* on rev. 'A' and later, P1.6 should NOT be set. */
-	PINSEL_ConfigPin(1,0,1);
-	PINSEL_ConfigPin(1,1,1);
-	PINSEL_ConfigPin(1,4,1);
-	PINSEL_ConfigPin(1,8,1);
-	PINSEL_ConfigPin(1,9,1);
-	PINSEL_ConfigPin(1,10,1);
-	PINSEL_ConfigPin(1,14,1);
-	PINSEL_ConfigPin(1,15,1);
-	PINSEL_ConfigPin(1,16,1);
-	PINSEL_ConfigPin(1,17,1);
+	PINSEL_ConfigPin(1, 0, 1); // txd0
+	PINSEL_ConfigPin(1, 1, 1); // rxd1
+	PINSEL_ConfigPin(1, 2, 1); // txd2
+	PINSEL_ConfigPin(1, 3, 1); // txd3
+
+	PINSEL_ConfigPin(1, 4, 1); // tx_en
+	PINSEL_ConfigPin(1, 6, 1); // tx_clk
+//	PINSEL_ConfigPin(1, 7, 1); // col
+	PINSEL_ConfigPin(1, 8, 1); // crs
+
+	PINSEL_ConfigPin(1, 9, 1); // rxd0
+	PINSEL_ConfigPin(1, 10, 1); // rxd1
+	PINSEL_ConfigPin(1, 11, 1); // rxd2
+	PINSEL_ConfigPin(1, 12, 1); // rxd3
+	PINSEL_ConfigPin(1, 13, 1); // rx_dv
+
+	PINSEL_ConfigPin(1, 14, 1); // rx_err
+	PINSEL_ConfigPin(1, 15, 1); // rx_clk
+	PINSEL_ConfigPin(1, 16, 1); // mdc
+	PINSEL_ConfigPin(1, 17, 1); // mdio
 
 	Emac_Config.Mode = EMAC_MODE_AUTO;
 	Emac_Config.pbEMAC_Addr = pxNetIf->hwaddr;
@@ -179,6 +189,7 @@ EMAC_CFG_Type Emac_Config;
 
 	if( xStatus != ERROR )
 	{
+		printf("init no err\r\n");
 		/* Enable the interrupt and set its priority to the minimum
 		interrupt priority.  */
 		pxNetIfInUse = pxNetIf;
@@ -429,6 +440,8 @@ struct eth_hdr *pxHeader;
 
 	xInsideISR++;
 
+	printf("ENET IRQ %d\r\n", LPC_EMAC->IntStatus);
+
 	while( ( ulInterruptCause = LPC_EMAC->IntStatus ) != 0 )
 	{
 		/* Clear the interrupt. */
@@ -461,19 +474,19 @@ struct eth_hdr *pxHeader;
 							/* IP or ARP packet? */
 							case ETHTYPE_IP:
 							case ETHTYPE_ARP:
-												/* Full packet send to tcpip_thread to process */
-												configASSERT( pxNetIfInUse );
-												if( pxNetIfInUse->input( p, pxNetIfInUse ) != ERR_OK )
-												{
-													LWIP_DEBUGF(NETIF_DEBUG, ( "ethernetif_input: IP input error\n" ) );
-													pbuf_free(p);
-													p = NULL;
-												}
-												break;
+								/* Full packet send to tcpip_thread to process */
+								configASSERT( pxNetIfInUse );
+								if( pxNetIfInUse->input( p, pxNetIfInUse ) != ERR_OK )
+								{
+									LWIP_DEBUGF(NETIF_DEBUG, ( "ethernetif_input: IP input error\n" ) );
+									pbuf_free(p);
+									p = NULL;
+								}
+								break;
 
 							default:
-												pbuf_free( p );
-												p = NULL;
+								pbuf_free( p );
+								p = NULL;
 							break;
 						}
 					}

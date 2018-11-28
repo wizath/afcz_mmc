@@ -294,7 +294,7 @@ static int32_t emac_CRCCalc(uint8_t frame_no_fcs[], int32_t frame_len)
 Status EMAC_Init(EMAC_CFG_Type *EMAC_ConfigStruct)
 {
 	/* Initialize the EMAC Ethernet controller. */
-	int32_t regv,tout, tmp;
+	int32_t regv, tout, tmp;
 
 	/* Set up clock and power for Ethernet module */
 	CLKPWR_ConfigPPWR (CLKPWR_PCONP_PCENET, ENABLE);
@@ -317,7 +317,7 @@ Status EMAC_Init(EMAC_CFG_Type *EMAC_ConfigStruct)
 	 * Find the clock that close to desired target clock
 	 */
 	tmp = CLKPWR_GetCLK(CLKPWR_CLKTYPE_CPU) / EMAC_MCFG_MII_MAXCLK;
-	for (tout = 0; tout < sizeof (EMAC_clkdiv); tout++){
+	for (tout = 0; tout < sizeof(EMAC_clkdiv); tout++){
 		if (EMAC_clkdiv[tout] >= tmp) break;
 	}
 	tout++;
@@ -325,13 +325,17 @@ Status EMAC_Init(EMAC_CFG_Type *EMAC_ConfigStruct)
 	// Write to MAC configuration register and reset
 	LPC_EMAC->MCFG = EMAC_MCFG_CLK_SEL(tout) | EMAC_MCFG_RES_MII;
 
+	for (tout = 100; tout; tout--);
+
 	// release reset
 	LPC_EMAC->MCFG &= ~(EMAC_MCFG_RES_MII);
 	LPC_EMAC->CLRT = EMAC_CLRT_DEF;
 	LPC_EMAC->IPGR = EMAC_IPGR_P2_DEF;
 
 	/* Enable Reduced MII interface. */
-	LPC_EMAC->Command = EMAC_CR_RMII | EMAC_CR_PASS_RUNT_FRM;
+//	LPC_EMAC->Command = EMAC_CR_RMII | EMAC_CR_PASS_RUNT_FRM;
+	// enable mii
+	LPC_EMAC->Command = EMAC_CR_PASS_RUNT_FRM;
 
 	/* Reset Reduced MII Logic. */
 	LPC_EMAC->SUPP = EMAC_SUPP_RES_RMII;
@@ -339,10 +343,10 @@ Status EMAC_Init(EMAC_CFG_Type *EMAC_ConfigStruct)
 	for (tout = 100; tout; tout--);
 	LPC_EMAC->SUPP = 0;
 
-	/* Put the DP83848C in reset mode */
+//	/* Put the DP83848C in reset mode */
 //	write_PHY (EMAC_PHY_REG_BMCR, EMAC_PHY_BMCR_RESET);
-
-	/* Wait for hardware reset to end. */
+//
+//	/* Wait for hardware reset to end. */
 //	for (tout = EMAC_PHY_RESP_TOUT; tout; tout--) {
 //		regv = read_PHY (EMAC_PHY_REG_BMCR);
 //		if (!(regv & (EMAC_PHY_BMCR_RESET | EMAC_PHY_BMCR_POWERDOWN))) {
@@ -357,9 +361,9 @@ Status EMAC_Init(EMAC_CFG_Type *EMAC_ConfigStruct)
 //	}
 
 	// Set PHY mode
-	if (EMAC_SetPHYMode(EMAC_ConfigStruct->Mode) < 0){
-		return (ERROR);
-	}
+//	if (EMAC_SetPHYMode(EMAC_ConfigStruct->Mode) < 0) {
+//		return (ERROR);
+//	}
 
 	// Set EMAC address
 	setEmacAddr(EMAC_ConfigStruct->pbEMAC_Addr);
@@ -373,10 +377,10 @@ Status EMAC_Init(EMAC_CFG_Type *EMAC_ConfigStruct)
 
 	/* Enable Rx Done and Tx Done interrupt for EMAC */
 	LPC_EMAC->IntEnable = EMAC_INT_RX_DONE | EMAC_INT_TX_DONE;
-/*	LPC_EMAC->IntEnable =(EMAC_INT_RX_OVERRUN | EMAC_INT_RX_ERR | EMAC_INT_RX_FIN \
-				| EMAC_INT_RX_DONE | EMAC_INT_TX_UNDERRUN | EMAC_INT_TX_ERR \
-				| EMAC_INT_TX_FIN | EMAC_INT_TX_DONE);
-*/
+	LPC_EMAC->IntEnable = (EMAC_INT_RX_OVERRUN | EMAC_INT_RX_ERR | EMAC_INT_RX_FIN \
+						| EMAC_INT_RX_DONE | EMAC_INT_TX_UNDERRUN | EMAC_INT_TX_ERR \
+						| EMAC_INT_TX_FIN | EMAC_INT_TX_DONE);
+
 	/* Reset all interrupts */
 	LPC_EMAC->IntClear  = 0xFFFF;
 
@@ -483,6 +487,8 @@ int32_t EMAC_SetPHYMode(uint32_t ulPHYMode)
 	/* Check if this is a DP83848C PHY. */
 	id1 = read_PHY (EMAC_PHY_REG_IDR1);
 	id2 = read_PHY (EMAC_PHY_REG_IDR2);
+
+	printf("id1 %d id2 %d\r\n", id1, id2);
 
 	if (((id1 << 16) | (id2 & 0xFFF0)) != 0 /*0x0007C0F0UL*/ /*boardPHY_ID*/) { // stupid workaround
 		switch(ulPHYMode){
@@ -760,8 +766,8 @@ uint8_t *EMAC_NextPacketToSend( void )
 
 void EMAC_StartTransmitNextBuffer( uint32_t ulLength )
 {
-// Get current Tx produce index
-uint32_t idx = LPC_EMAC->TxProduceIndex;
+	// Get current Tx produce index
+	uint32_t idx = LPC_EMAC->TxProduceIndex;
 
 	Tx_Desc[idx].Ctrl = (ulLength - 1) | (EMAC_TCTRL_INT | EMAC_TCTRL_LAST);
 

@@ -80,7 +80,7 @@
 #define LWIP_PLATFORM_BYTESWAP          0
 
 /* Non-static memory, used with DMA pool */
-#define MEM_SIZE                        (6 * 1024)
+#define MEM_SIZE                        (8 * 1024)
 
 /* Status callback */
 #define LWIP_NETIF_STATUS_CALLBACK		1
@@ -118,11 +118,12 @@
 #define IP_DEBUG                        LWIP_DBG_OFF
 #define TCPIP_DEBUG                     LWIP_DBG_OFF
 #define DHCP_DEBUG                      LWIP_DBG_OFF
+#define NETIF_DEBUG						LWIP_DBG_ON
 #define UDP_DEBUG                       LWIP_DBG_OFF
 
 /* This define is custom for the LPC EMAC driver. Enabled it to
    get debug messages for the driver. */
-#define EMAC_DEBUG                    LWIP_DBG_OFF
+#define EMAC_DEBUG                    	LWIP_DBG_ON
 
 #define DEFAULT_THREAD_PRIO             (tskIDLE_PRIORITY + 1)
 #define DEFAULT_THREAD_STACKSIZE        (configMINIMAL_STACK_SIZE)

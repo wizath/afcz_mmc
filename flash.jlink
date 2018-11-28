@@ -1,0 +1,5 @@
+device LPC1776
+loadbin Debug/mmc_afcz.bin 0x00
+r
+g
+exit

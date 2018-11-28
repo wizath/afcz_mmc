@@ -28,10 +28,10 @@ void uart_init(void)
 	UART_Init(LPC_UART0, &UARTConfigStruct);
 	UART_TxCmd(LPC_UART0, ENABLE);
 
-	UART_IntConfig(LPC_UART0, UART_INTCFG_RBR, ENABLE);
-	NVIC_EnableIRQ(UART0_IRQn);
-
-	xUartRxQueue = xQueueCreate(64, sizeof(uint16_t));
+//	UART_IntConfig(LPC_UART0, UART_INTCFG_RBR, ENABLE);
+//	NVIC_EnableIRQ(UART0_IRQn);
+//
+//	xUartRxQueue = xQueueCreate(64, sizeof(uint16_t));
 }
 
 void UART0_IRQHandler(void)

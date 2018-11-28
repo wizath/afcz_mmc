@@ -86,8 +86,9 @@
 							</tool>
 						</toolChain>
 					</folderInfo>
+					<fileInfo id="com.crt.advproject.config.exe.debug.1034023394.1423056335" name="lpc177x_8x_emac.h" rcbsApplicability="disable" resourcePath="Libs/lpc177x.lpc178x.cmsis.driver.library/inc/lpc177x_8x_emac.h" toolsToInvoke=""/>
 					<sourceEntries>
-						<entry excluding="Applications/apps/httpserver_raw/fsdata.c|FreeRTOS_portable/MemMang/heap_2.c|FreeRTOS_portable/MemMang/heap_1.c|FreeRTOS_portable/MemMang/heap_3.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+						<entry excluding="Libs/lpc177x.lpc178x.cmsis.driver.library/inc/lpc177x_8x_emac.h|Libs/lpc177x.lpc178x.cmsis.driver.library/src/lpc177x_8x_emac.c|Applications/apps/httpserver_raw/fsdata.c|FreeRTOS_portable/MemMang/heap_2.c|FreeRTOS_portable/MemMang/heap_1.c|FreeRTOS_portable/MemMang/heap_3.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>

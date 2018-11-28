@@ -561,17 +561,17 @@ EMAC_RINFO_LEN_ERR   | EMAC_RINFO_ALIGN_ERR | EMAC_RINFO_OVERRUN)
 #define EMAC_PHY_AN_10BASE_T					(1<<5)		/**< 10Mbps capable */
 #define EMAC_PHY_AN_FIELD(n)					(n & 0x1F)  /**< Selector Field */
 
-#define EMAC_PHY_FULLD_100M      0x2100      /**< Full Duplex 100Mbit               */
-#define EMAC_PHY_HALFD_100M      0x2000      /**< Half Duplex 100Mbit               */
-#define EMAC_PHY_FULLD_10M       0x0100      /**< Full Duplex 10Mbit                */
-#define EMAC_PHY_HALFD_10M       0x0000      /**< Half Duplex 10MBit                */
-#define EMAC_PHY_AUTO_NEG        0x3000      /**< Select Auto Negotiation           */
+#define EMAC_PHY_FULLD_100M      				0x2100      /**< Full Duplex 100Mbit               */
+#define EMAC_PHY_HALFD_100M      				0x2000      /**< Half Duplex 100Mbit               */
+#define EMAC_PHY_FULLD_10M       				0x0100      /**< Full Duplex 10Mbit                */
+#define EMAC_PHY_HALFD_10M       				0x0000      /**< Half Duplex 10MBit                */
+#define EMAC_PHY_AUTO_NEG        				0x3000      /**< Select Auto Negotiation           */
 
-#define EMAC_PHY_SR_100_SPEED		((1<<14)|(1<<13))
-#define EMAC_PHY_SR_FULL_DUP		((1<<14)|(1<<12))
+#define EMAC_PHY_SR_100_SPEED					((1<<14) | (1<<13))
+#define EMAC_PHY_SR_FULL_DUP					((1<<14) | (1<<12))
 
-#define EMAC_DEF_ADR    (0x01<<8)		/**< Default PHY device address        */
-#define EMAC_KSZ8721BL_ID 	((0x22 << 16) | 0x1619 ) /**< PHY Identifier */
+#define EMAC_DEF_ADR    						0x10 		// (0x01<<8)		/**< Default PHY device address        */
+#define EMAC_KSZ8721BL_ID 						((0x22 << 16) | 0x1619 ) /**< PHY Identifier */
 #endif
 
 /**
