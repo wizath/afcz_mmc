@@ -38,8 +38,8 @@
 /* Define platform endianness (might already be defined) */
 #define BYTE_ORDER LITTLE_ENDIAN
 
-#define LWIP_DEBUG			1
-#define LPC_TX_PBUF_BOUNCE_EN	1
+#define LWIP_DEBUG						1
+#define LPC_TX_PBUF_BOUNCE_EN			1
 //#define HTTPD_DEBUG         LWIP_DBG_ON
 
 /* Use LWIP timers */

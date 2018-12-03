@@ -294,7 +294,7 @@ static int32_t emac_CRCCalc(uint8_t frame_no_fcs[], int32_t frame_len)
 Status EMAC_Init(EMAC_CFG_Type *EMAC_ConfigStruct)
 {
 	/* Initialize the EMAC Ethernet controller. */
-	int32_t regv, tout, tmp;
+	int32_t regv,tout, tmp;
 
 	/* Set up clock and power for Ethernet module */
 	CLKPWR_ConfigPPWR (CLKPWR_PCONP_PCENET, ENABLE);
@@ -306,7 +306,7 @@ Status EMAC_Init(EMAC_CFG_Type *EMAC_ConfigStruct)
 	LPC_EMAC->Command = EMAC_CR_REG_RES | EMAC_CR_TX_RES | EMAC_CR_RX_RES | EMAC_CR_PASS_RUNT_FRM;
 
 	/* A short delay after reset. */
-//	vTaskDelay( 2 );
+	for (tout = 100; tout; tout--);
 
 	/* Initialize MAC control registers. */
 	LPC_EMAC->MAC1 = EMAC_MAC1_PASS_ALL;
@@ -317,7 +317,7 @@ Status EMAC_Init(EMAC_CFG_Type *EMAC_ConfigStruct)
 	 * Find the clock that close to desired target clock
 	 */
 	tmp = CLKPWR_GetCLK(CLKPWR_CLKTYPE_CPU) / EMAC_MCFG_MII_MAXCLK;
-	for (tout = 0; tout < sizeof(EMAC_clkdiv); tout++){
+	for (tout = 0; tout < sizeof (EMAC_clkdiv); tout++){
 		if (EMAC_clkdiv[tout] >= tmp) break;
 	}
 	tout++;
@@ -325,17 +325,13 @@ Status EMAC_Init(EMAC_CFG_Type *EMAC_ConfigStruct)
 	// Write to MAC configuration register and reset
 	LPC_EMAC->MCFG = EMAC_MCFG_CLK_SEL(tout) | EMAC_MCFG_RES_MII;
 
-	for (tout = 100; tout; tout--);
-
 	// release reset
 	LPC_EMAC->MCFG &= ~(EMAC_MCFG_RES_MII);
 	LPC_EMAC->CLRT = EMAC_CLRT_DEF;
 	LPC_EMAC->IPGR = EMAC_IPGR_P2_DEF;
 
 	/* Enable Reduced MII interface. */
-//	LPC_EMAC->Command = EMAC_CR_RMII | EMAC_CR_PASS_RUNT_FRM;
-	// enable mii
-	LPC_EMAC->Command = EMAC_CR_PASS_RUNT_FRM;
+	LPC_EMAC->Command = EMAC_CR_RMII | EMAC_CR_PASS_RUNT_FRM;
 
 	/* Reset Reduced MII Logic. */
 	LPC_EMAC->SUPP = EMAC_SUPP_RES_RMII;
@@ -345,7 +341,7 @@ Status EMAC_Init(EMAC_CFG_Type *EMAC_ConfigStruct)
 
 //	/* Put the DP83848C in reset mode */
 //	write_PHY (EMAC_PHY_REG_BMCR, EMAC_PHY_BMCR_RESET);
-//
+
 //	/* Wait for hardware reset to end. */
 //	for (tout = EMAC_PHY_RESP_TOUT; tout; tout--) {
 //		regv = read_PHY (EMAC_PHY_REG_BMCR);
@@ -353,15 +349,14 @@ Status EMAC_Init(EMAC_CFG_Type *EMAC_ConfigStruct)
 //			/* Reset complete, device not Power Down. */
 //			break;
 //		}
-//		if (tout == 0) {
+//		if (tout == 0){
 //			// Time out, return ERROR
 //			return (ERROR);
 //		}
 //		vTaskDelay( 2 );
 //	}
-
-	// Set PHY mode
-//	if (EMAC_SetPHYMode(EMAC_ConfigStruct->Mode) < 0) {
+//	// Set PHY mode
+//	if (EMAC_SetPHYMode(EMAC_ConfigStruct->Mode) < 0){
 //		return (ERROR);
 //	}
 
@@ -377,9 +372,9 @@ Status EMAC_Init(EMAC_CFG_Type *EMAC_ConfigStruct)
 
 	/* Enable Rx Done and Tx Done interrupt for EMAC */
 	LPC_EMAC->IntEnable = EMAC_INT_RX_DONE | EMAC_INT_TX_DONE;
-	LPC_EMAC->IntEnable = (EMAC_INT_RX_OVERRUN | EMAC_INT_RX_ERR | EMAC_INT_RX_FIN \
-						| EMAC_INT_RX_DONE | EMAC_INT_TX_UNDERRUN | EMAC_INT_TX_ERR \
-						| EMAC_INT_TX_FIN | EMAC_INT_TX_DONE);
+	LPC_EMAC->IntEnable =(EMAC_INT_RX_OVERRUN | EMAC_INT_RX_ERR | EMAC_INT_RX_FIN \
+				| EMAC_INT_RX_DONE | EMAC_INT_TX_UNDERRUN | EMAC_INT_TX_ERR \
+				| EMAC_INT_TX_FIN | EMAC_INT_TX_DONE);
 
 	/* Reset all interrupts */
 	LPC_EMAC->IntClear  = 0xFFFF;

@@ -179,6 +179,77 @@ void network_init(void *arg)
 #endif
 }
 
+xTaskHandle xBroadcastTask = NULL;
+#include "lwip/udp.h"
+
+static void bcast_task(void *pvParameters)
+{
+	struct netconn *conn;
+	char msg[] = "testing";
+	struct netbuf *buf;
+	char * data;
+
+//	conn = netconn_new(NETCONN_UDP);
+//	netconn_bind(conn, IP_ADDR_ANY, 7776);
+//	netconn_connect(conn, IP_ADDR_BROADCAST, 7777);
+
+	printf("[log] starting udp broadcaster task\n");
+
+    struct pbuf  *p;
+    char data1[8] = { 0x00 };
+    u16_t  Port;
+    Port = 69;
+    int count = 0;
+    int n = 0;
+    int buflen = 8;
+    struct udp_pcb *udp_1;
+    struct ip_addr ipaddr, ipaddr_remote, netmask, gw;
+
+    IP4_ADDR(&ipaddr_remote, 192, 168, 95, 146);
+
+    udp_1 = udp_new();
+    udp_connect(udp_1, &ipaddr_remote, Port);
+
+	for (;;)
+	{
+		p = pbuf_alloc(PBUF_TRANSPORT, buflen, PBUF_POOL);
+
+		if (!p) {
+			printf("error allocating pbuf\r\n");
+			return ERR_MEM;
+		}
+
+		memcpy(p->payload, data1, buflen);
+		udp_send(udp_1, p);
+		printf("SEND\r\n");
+		count = 0;
+		pbuf_free(p);
+
+//		buf = netbuf_new();
+//		data = netbuf_alloc(buf, sizeof(msg));
+//		memcpy (data, msg, sizeof (msg));
+//		netconn_send(conn, buf);
+//		netbuf_delete(buf);
+//
+//		printf("Sending\r\n");
+
+		vTaskDelay( 500 );
+	}
+}
+
+void bcast_task_start(void)
+{
+	printf("[log] starting udp broadcaster\n");
+	xTaskCreate(bcast_task , "UDP Daemon", configMINIMAL_STACK_SIZE, ( void * ) NULL, tskIDLE_PRIORITY + 1, &xBroadcastTask);
+}
+
+void bcast_task_stop(void)
+{
+	printf("[log] stopping udp broadcaster\n");
+	if (xBroadcastTask != NULL)
+		vTaskSuspend(xBroadcastTask);
+}
+
 /* LWIP kickoff and PHY link monitor thread */
 static void vSetupIFTask(void *pvParameters) {
 	volatile s32_t tcpipdone = 0;
@@ -200,6 +271,7 @@ static void vSetupIFTask(void *pvParameters) {
 
 	/* Initialize and start application */
 //	http_server_netconn_init();
+//	bcast_task_start();
 
 	/* This loop monitors the PHY link and will handle cable events
 	   via the PHY driver. */
@@ -581,7 +653,6 @@ int main(void)
 
 	psu_init();
 	delay_ms(200);
-
 //	printf("xr start\r\n");
 //	xr77129_load_runtimes();
 
@@ -728,14 +799,35 @@ int main(void)
            phy_init();
 //           phy_scan();
 
-           int i = 0x10;
-	   write_PHY(i, 22, 0x00);
-	   for (int j = 0; j < 10; j++) {
-		   delay_ms(5);
-		   uint32_t val = read_PHY(i, j);
-		   printf("PHY [0x%02X] Reg %X = %d\r\n", i, j, val);
-	   }
-	   delay_ms(1);
+       for (int j = 0x10; j < 0x17; j++)
+       {
+    	   delay_ms(5);
+    	   uint32_t val = read_PHY(j, 0x00);
+    	   printf("Link [%d] = %d\r\n", j, (val >> 11) & 0x01);
+    	   printf("CMode [%d] = %d\r\n", j, val & 0b1111);
+    	   printf("==============\r\n");
+       }
+
+       uint16_t val = read_PHY(21, 0x01);
+       printf("PHY [0x%02X] Reg %X = %d\r\n", 21, 0x01, val);
+       val |= (1 << 14);
+//       val |= (1 << 15);
+
+       write_PHY(21, 0x01, val);
+       val = 0x00;
+       val = read_PHY(21, 0x01);
+	   printf("PHY [0x%02X] Reg %X = %d\r\n", 21, 0x01, val);
+
+//       for (int i = 0; i < 33; i++)
+//       {
+////	   write_PHY(i, 22, 0x00);
+//	   for (int j = 0; j < 10; j++) {
+//		   delay_ms(5);
+//		   uint32_t val = read_PHY(i, j);
+//		   printf("PHY [0x%02X] Reg %X = %d\r\n", i, j, val);
+//	   }
+//       }
+//	   delay_ms(1);
 
 	/* First record in log also initialize it */
  	printf("Started. CPU clock = %lu MHz, SDRAM clock = %lu Mhz\n", SystemCoreClock / 1000000u, EMCClock / 1000000u);
