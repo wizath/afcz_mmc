@@ -69,6 +69,27 @@ void phy_init(void)
 	PINSEL_ConfigPin(1, 16, 1);
 	PINSEL_ConfigPin(1, 17, 1);
 
+	PINSEL_ConfigPin(1, 0, 1); // txd0
+	PINSEL_ConfigPin(1, 1, 1); // rxd1
+	PINSEL_ConfigPin(1, 2, 1); // txd2
+	PINSEL_ConfigPin(1, 3, 1); // txd3
+
+	PINSEL_ConfigPin(1, 4, 1); // tx_en
+	PINSEL_ConfigPin(1, 6, 1); // tx_clk
+//	PINSEL_ConfigPin(1, 7, 1); // col
+	PINSEL_ConfigPin(1, 8, 1); // crs
+
+	PINSEL_ConfigPin(1, 9, 1); // rxd0
+	PINSEL_ConfigPin(1, 10, 1); // rxd1
+	PINSEL_ConfigPin(1, 11, 1); // rxd2
+	PINSEL_ConfigPin(1, 12, 1); // rxd3
+	PINSEL_ConfigPin(1, 13, 1); // rx_dv
+
+	PINSEL_ConfigPin(1, 14, 1); // rx_err
+	PINSEL_ConfigPin(1, 15, 1); // rx_clk
+	PINSEL_ConfigPin(1, 16, 1); // mdc
+	PINSEL_ConfigPin(1, 17, 1); // mdio
+
 	Emac_Config.PhyCfg.Mode = EMAC_MODE_AUTO;
 	EMAC_Init( &Emac_Config );
 }
@@ -117,8 +138,8 @@ void phy_scan(void)
 	uint16_t recv = 0x0;
 	for (int i = 0; i < 32; i++)
 	{
-		write_PHY(i, 31, 0x10);
-		recv = read_PHY(i, 18);
+//		write_PHY(i, 31, 0x10);
+		recv = read_PHY(i, 0x00);
 		if (recv != 0xFFFF) printf("PHY Scan [0x%02X GMIICR] = 0x%02X\n", i, recv);
 	}
 	printf("Scan done\n");
@@ -796,28 +817,82 @@ int main(void)
            delay_ms(200);
            LPC_GPIO0->SET |= (1 << 23);
 //           spi_flash_tests();
-           phy_init();
+//           phy_init();
 //           phy_scan();
+//
+//           delay_ms(5000);
+//
+//
+////       for (int j = 0x10; j < 0x17; j++)
+////       {
+////    	   delay_ms(5);
+////    	   uint32_t val = read_PHY(j, 0x00);
+////    	   printf("Link [%d] = %d\r\n", j, (val >> 11) & 0x01);
+////    	   printf("CMode [%d] = %d\r\n", j, val & 0b1111);
+////    	   printf("==============\r\n");
+////       }
+////
+////       uint16_t val = read_PHY(21, 0x01);
+////       printf("PHY [0x%02X] Reg %X = %d\r\n", 21, 0x01, val);
+////       val |= (1 << 14);
+//////       val |= (1 << 15);
+////
+////       write_PHY(21, 0x01, val);
+////       val = 0x00;
+////       val = read_PHY(21, 0x01);
+////	   printf("PHY [0x%02X] Reg %X = %d\r\n", 21, 0x01, val);
+//
+//
+////         force link down
+//	   uint16_t ret = read_PHY(21, 0x01);
+//	   printf("Link forced value %d\r\n", ret);
+//	   ret &= ~(1 << 5); // bit 4 = 1 forced link down
+//	   ret |= (1 << 4); // bit 5 = 1 enable @up setting
+//	   write_PHY(21, 0x01, ret);
+//
+//	   delay_ms(10);
+//
+//	   // force 10mbs
+//	   ret = read_PHY(21, 0x01);
+//
+//	   ret &= ~(1 << 7);
+//	   ret |= (1 << 6);
+//
+//	   ret &= ~(1 << 3);
+//	   ret |= (1 << 2);
+//
+//	   ret &= ~(1 << 0);
+//	   ret &= ~(1 << 1);
+//	   write_PHY(21, 0x01, ret);
+//	   delay_ms(10);
+//
+//	   ret = read_PHY(21, 0x01);
+//	   printf("Link forced value %d\r\n", ret);
+//
+//	   delay_ms(10);
+//
+//	   write_PHY(21, 0x01, ret);
+//	   ret = read_PHY(21, 0x01);
+//	   ret |= (1 << 5); // force link up
+//	   write_PHY(21, 0x01, ret);
 
-       for (int j = 0x10; j < 0x17; j++)
-       {
-    	   delay_ms(5);
-    	   uint32_t val = read_PHY(j, 0x00);
-    	   printf("Link [%d] = %d\r\n", j, (val >> 11) & 0x01);
-    	   printf("CMode [%d] = %d\r\n", j, val & 0b1111);
-    	   printf("==============\r\n");
-       }
-
-       uint16_t val = read_PHY(21, 0x01);
-       printf("PHY [0x%02X] Reg %X = %d\r\n", 21, 0x01, val);
-       val |= (1 << 14);
-//       val |= (1 << 15);
-
-       write_PHY(21, 0x01, val);
-       val = 0x00;
-       val = read_PHY(21, 0x01);
-	   printf("PHY [0x%02X] Reg %X = %d\r\n", 21, 0x01, val);
-
+       // enable RSVD2CPU
+//	   uint8_t addr_mask = read_PHY(0x1C, 0x02);
+//	   printf("Register map %d\r\n", addr_mask);
+//       write_PHY(0x1C, 0x02, 0xFFFF);
+//
+//       addr_mask = read_PHY(0x1C, 0x02);
+//       printf("Register map %d\r\n", addr_mask);
+//
+//       // enable RSVD2CPU bit
+//       uint8_t mgmt_mask = read_PHY(0x1C, 0x05);
+//       printf("mgmt mask %d\r\n", addr_mask);
+//       mgmt_mask |= (1 << 3);
+//       write_PHY(0x1C, 0x05, mgmt_mask);
+//
+//       mgmt_mask = read_PHY(0x1C, 0x05);
+//       printf("mgmt mask %d\r\n", addr_mask);
+//
 //       for (int i = 0; i < 33; i++)
 //       {
 ////	   write_PHY(i, 22, 0x00);

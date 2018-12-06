@@ -213,6 +213,7 @@ int32_t read_PHY (uint32_t PhyReg)
  **********************************************************************/
 static void setEmacAddr(uint8_t abStationAddr[])
 {
+	printf("MAC %d %d %d %d %d %d\r\n", abStationAddr[0], abStationAddr[1], abStationAddr[2], abStationAddr[3], abStationAddr[4], abStationAddr[5]);
 	/* Set the Ethernet MAC Address registers */
 	LPC_EMAC->SA0 = ((uint32_t)abStationAddr[5] << 8) | (uint32_t)abStationAddr[4];
 	LPC_EMAC->SA1 = ((uint32_t)abStationAddr[3] << 8) | (uint32_t)abStationAddr[2];
@@ -309,9 +310,10 @@ Status EMAC_Init(EMAC_CFG_Type *EMAC_ConfigStruct)
 	for (tout = 100; tout; tout--);
 
 	/* Initialize MAC control registers. */
-	LPC_EMAC->MAC1 = EMAC_MAC1_PASS_ALL;
-	LPC_EMAC->MAC2 = EMAC_MAC2_CRC_EN | EMAC_MAC2_PAD_EN;
+	LPC_EMAC->MAC1 = EMAC_MAC1_PASS_ALL | EMAC_MAC1_RX_FLOWC | EMAC_MAC1_TX_FLOWC;
+	LPC_EMAC->MAC2 = EMAC_MAC2_CRC_EN | EMAC_MAC2_PAD_EN;// | EMAC_MAC2_FULL_DUP;
 	LPC_EMAC->MAXF = EMAC_ETH_MAX_FLEN;
+	LPC_EMAC->SUPP &= ~(1 << 8);
 
 	/*
 	 * Find the clock that close to desired target clock
@@ -331,13 +333,13 @@ Status EMAC_Init(EMAC_CFG_Type *EMAC_ConfigStruct)
 	LPC_EMAC->IPGR = EMAC_IPGR_P2_DEF;
 
 	/* Enable Reduced MII interface. */
-	LPC_EMAC->Command = EMAC_CR_RMII | EMAC_CR_PASS_RUNT_FRM;
+	LPC_EMAC->Command = EMAC_CR_PASS_RUNT_FRM;
 
 	/* Reset Reduced MII Logic. */
-	LPC_EMAC->SUPP = EMAC_SUPP_RES_RMII;
+//	LPC_EMAC->SUPP = EMAC_SUPP_RES_RMII;
 
-	for (tout = 100; tout; tout--);
-	LPC_EMAC->SUPP = 0;
+//	for (tout = 100; tout; tout--);
+//	LPC_EMAC->SUPP = 0;
 
 //	/* Put the DP83848C in reset mode */
 //	write_PHY (EMAC_PHY_REG_BMCR, EMAC_PHY_BMCR_RESET);
@@ -380,7 +382,7 @@ Status EMAC_Init(EMAC_CFG_Type *EMAC_ConfigStruct)
 	LPC_EMAC->IntClear  = 0xFFFF;
 
 	/* Enable receive and transmit mode of MAC Ethernet core */
-	LPC_EMAC->Command  |= (EMAC_CR_RX_EN | EMAC_CR_TX_EN);
+	LPC_EMAC->Command  |= (EMAC_CR_RX_EN | EMAC_CR_TX_EN | EMAC_CR_PASS_RX_FILT | EMAC_CR_PASS_RUNT_FRM);// | EMAC_CR_FULL_DUP);
 	LPC_EMAC->MAC1     |= EMAC_MAC1_REC_EN;
 
 	return SUCCESS;
