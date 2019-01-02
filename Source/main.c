@@ -25,6 +25,9 @@
 #include "spi.h"
 #include "xr77192.h"
 
+extern int32_t write_PHY(uint16_t bPhyAddr, uint32_t PhyReg, uint16_t Value);
+extern int32_t read_PHY (uint16_t bPhyAddr, uint32_t PhyReg);
+
 #define _EMAC
 #define DEBUGSTR(...) taskENTER_CRITICAL(); \
 					  printf(__VA_ARGS__); \
@@ -58,16 +61,16 @@ void phy_init(void)
 	int32_t regv,tout, tmp;
 
 	// init pins
-	PINSEL_ConfigPin(1, 0, 1);
-	PINSEL_ConfigPin(1, 1, 1);
-	PINSEL_ConfigPin(1, 4, 1);
-	PINSEL_ConfigPin(1, 8, 1);
-	PINSEL_ConfigPin(1, 9, 1);
-	PINSEL_ConfigPin(1, 10, 1);
-	PINSEL_ConfigPin(1, 14, 1);
-	PINSEL_ConfigPin(1, 15, 1);
-	PINSEL_ConfigPin(1, 16, 1);
-	PINSEL_ConfigPin(1, 17, 1);
+//	PINSEL_ConfigPin(1, 0, 1);
+//	PINSEL_ConfigPin(1, 1, 1);
+//	PINSEL_ConfigPin(1, 4, 1);
+//	PINSEL_ConfigPin(1, 8, 1);
+//	PINSEL_ConfigPin(1, 9, 1);
+//	PINSEL_ConfigPin(1, 10, 1);
+//	PINSEL_ConfigPin(1, 14, 1);
+//	PINSEL_ConfigPin(1, 15, 1);
+//	PINSEL_ConfigPin(1, 16, 1);
+//	PINSEL_ConfigPin(1, 17, 1);
 
 	PINSEL_ConfigPin(1, 0, 1); // txd0
 	PINSEL_ConfigPin(1, 1, 1); // rxd1
@@ -76,7 +79,7 @@ void phy_init(void)
 
 	PINSEL_ConfigPin(1, 4, 1); // tx_en
 	PINSEL_ConfigPin(1, 6, 1); // tx_clk
-//	PINSEL_ConfigPin(1, 7, 1); // col
+	PINSEL_ConfigPin(1, 7, 1); // col
 	PINSEL_ConfigPin(1, 8, 1); // crs
 
 	PINSEL_ConfigPin(1, 9, 1); // rxd0
@@ -94,44 +97,127 @@ void phy_init(void)
 	EMAC_Init( &Emac_Config );
 }
 
-int32_t read_PHY (uint16_t bPhyAddr, uint32_t PhyReg)
+//int32_t read_PHY (uint16_t bPhyAddr, uint32_t PhyReg)
+//{
+//	/* Read a PHY register 'PhyReg'. */
+//	uint32_t tout;
+//
+//	LPC_EMAC->MADR = ((bPhyAddr & 0x1F) << 8) | (PhyReg & 0x1F);
+//	LPC_EMAC->MCMD = EMAC_MCMD_READ;
+//
+//	/* Wait until operation completed */
+//	tout = 0;
+//	for (tout = 0; tout < EMAC_MII_RD_TOUT; tout++) {
+//		if ((LPC_EMAC->MIND & EMAC_MIND_BUSY) == 0) {
+//			LPC_EMAC->MCMD = 0;
+//			return (LPC_EMAC->MRDD);
+//		}
+//	}
+//	// Time out!
+//	return (-1);
+//}
+//
+//int32_t write_PHY(uint16_t bPhyAddr, uint32_t PhyReg, uint16_t Value)
+//{
+//	/* Write a data 'Value' to PHY register 'PhyReg'. */
+//	uint32_t tout;
+//
+//	LPC_EMAC->MADR = ((bPhyAddr & 0x1F) << 8 ) | (PhyReg & 0x1F);
+//	LPC_EMAC->MWTD = Value;
+//
+//	/* Wait until operation completed */
+//	tout = 0;
+//	for (tout = 0; tout < EMAC_MII_WR_TOUT; tout++) {
+//		if ((LPC_EMAC->MIND & EMAC_MIND_BUSY) == 0) {
+//			return (0);
+//		}
+//	}
+//	// Time out!
+//	return (-1);
+//}
+
+void configure_phy(void)
 {
-	/* Read a PHY register 'PhyReg'. */
-	uint32_t tout;
+//	uint32_t val = read_PHY(21, 0x00);
+//	printf("Link [%d] = %d\r\n", 21, (val >> 11) & 0x01);
+//	printf("CMode [%d] = %d\r\n", 21, val & 0b1111);
+//	printf("==============\r\n");
 
-	LPC_EMAC->MADR = ((bPhyAddr & 0x1F) << 8) | (PhyReg & 0x1F);
-	LPC_EMAC->MCMD = EMAC_MCMD_READ;
+	printf("Configuring PHY\r\n");
 
-	/* Wait until operation completed */
-	tout = 0;
-	for (tout = 0; tout < EMAC_MII_RD_TOUT; tout++) {
-		if ((LPC_EMAC->MIND & EMAC_MIND_BUSY) == 0) {
-			LPC_EMAC->MCMD = 0;
-			return (LPC_EMAC->MRDD);
-		}
-	}
-	// Time out!
-	return (-1);
+//	force link down
+	uint16_t ret = read_PHY(21, 0x01);
+	printf("Link forced value %d\r\n", ret);
+	ret &= ~(1 << 5); // bit 4 = 1 forced link down
+	ret |= (1 << 4); // bit 5 = 1 enable @up setting
+	write_PHY(21, 0x01, ret);
+
+	delay_ms(10);
+
+	ret = read_PHY(21, 0x01);
+
+	// enable 100mbs
+	ret |= (1 << 0);
+	ret &= ~(1 << 1);
+
+//	flow control value
+//	ret |= (1 << 7);
+
+//	flow control enable
+//	ret |= (1 << 6);
+
+	// duplex = half
+//	ret &= ~(1 << 3);
+
+	// duplex full
+	ret |= (1 << 3);
+
+	// force duplex enable
+	ret |= (1 << 2);
+
+//	enable rgmii timing
+//	ret |= (1 << 15);
+//	ret |= (1 << 14);
+
+	// force 10mbs
+//	ret &= ~(1 << 0);
+//	ret &= ~(1 << 1);
+	write_PHY(21, 0x01, ret);
+	delay_ms(10);
+
+	ret = read_PHY(21, 0x01);
+	delay_ms(10);
+
+	ret |= (1 << 5); // force link up
+	write_PHY(21, 0x01, ret);
+
+	delay_ms(10);
+	ret = read_PHY(21, 0x01);
+
+	uint32_t val = read_PHY(21, 0x00);
+	printf("PauseEn [15] = %d\r\n", (val >> 15) & 0x01);
+	printf("MyPause [14] = %d\r\n", (val >> 14) & 0x01);
+	printf("PhyDetect [12] = %d\r\n", (val >> 12) & 0x01);
+	printf("Link [11] = %d\r\n", (val >> 11) & 0x01);
+	printf("Duplex [10] = %d\r\n", (val >> 10) & 0x01);
+	printf("Speed [9:8] = %d\r\n", (val & 0b110000000) >> 7);
+	printf("TxPaused [5] = %d\r\n", (val >> 5) & 0x01);
+	printf("FlowCtrl [4] = %d\r\n", (val >> 4) & 0x01);
+	printf("CMode [3:0] = %d\r\n", val & 0b1111);
+	printf("==============\r\n");
+
+	uint32_t gpio = read_PHY(21, 0x1F);
+	printf("PORT ENABLE %d\r\n", gpio >> 12);
+
+//	ret = read_PHY(21, 0x04);
+//	ret |= 0x03;
+//	write_PHY(21, 0x04, ret);
+//
+//	delay_ms(10);
+//	ret = read_PHY(21, 0x04);
+//	printf("Port Control %d\r\n", ret);
 }
 
-int32_t write_PHY(uint16_t bPhyAddr, uint32_t PhyReg, uint16_t Value)
-{
-	/* Write a data 'Value' to PHY register 'PhyReg'. */
-	uint32_t tout;
-
-	LPC_EMAC->MADR = ((bPhyAddr & 0x1F) << 8 ) | (PhyReg & 0x1F);
-	LPC_EMAC->MWTD = Value;
-
-	/* Wait until operation completed */
-	tout = 0;
-	for (tout = 0; tout < EMAC_MII_WR_TOUT; tout++) {
-		if ((LPC_EMAC->MIND & EMAC_MIND_BUSY) == 0) {
-			return (0);
-		}
-	}
-	// Time out!
-	return (-1);
-}
 
 void phy_scan(void)
 {
@@ -292,7 +378,7 @@ static void vSetupIFTask(void *pvParameters) {
 
 	/* Initialize and start application */
 //	http_server_netconn_init();
-//	bcast_task_start();
+	bcast_task_start();
 
 	/* This loop monitors the PHY link and will handle cable events
 	   via the PHY driver. */
@@ -665,6 +751,35 @@ static void prvSetupHardware(void)
 	spi_init();
 }
 
+static void vblinkIFTask2(void *pvParameters)
+{
+   while(1)
+	{
+	   printf("========================\r\n");
+	   printf("TSV0 %d TSV1 %d\r\n", LPC_EMAC->TSV0, LPC_EMAC->TSV1);
+	   printf("EMAC STATUS %d\r\n", LPC_EMAC->Status);
+	   uint32_t ret = LPC_EMAC->TSV0;
+	   if (ret & 0x01) printf("CRCERR\r\n");
+	   if (ret & 0x02) printf("LCE\r\n");
+	   if (ret & 0x04) printf("LOR\r\n");
+	   if (ret & 0x08) printf("DONE\r\n");
+	   if (ret & 0x10) printf("MULTICAST\r\n");
+	   if (ret & 0x20) printf("BROADCAST\r\n");
+	   if (ret & 0x40) printf("PACKETDEFER\r\n");
+	   if (ret & 0x80) printf("EXDF\r\n");
+	   if (ret & 0x100) printf("EXCOL\r\n");
+	   if (ret & 0x200) printf("LCOL\r\n");
+	   if (ret & 0x400) printf("GIANT\r\n");
+	   if (ret & 0x800) printf("UNDERRUN\r\n");
+	   if (ret & 0x10000000) printf("CONTROLFRAME\r\n");
+	   if (ret & 0x20000000) printf("PAUSE\r\n");
+	   if (ret & 0x40000000) printf("BACKPRESSURE\r\n");
+	   if (ret & 0x80000000) printf("VLAN\r\n");
+	   printf("========================\r\n");
+	   vTaskDelay(1000);
+	}
+}
+
 /**
  * Program entry point 
  */
@@ -681,17 +796,17 @@ int main(void)
 	printf("XR END\r\n");
 	delay_ms(100);
 
-	LPC_GPIO0->DIR |= (1 << 23); // Switch RESETn
-	LPC_GPIO4->SET |= (1 << 18); //initialize SCANSTA
-	LPC_GPIO4->DIR |= (1 << 18);// scansta  reset
-	LPC_GPIO4->DIR |= (1 << 25);//lpsel0 PROG master
-	LPC_GPIO4->DIR |= (1 << 26);//lpsel1 MMC JTAG
-	LPC_GPIO4->DIR |= (1 << 27);//lpsel2 FPGA JTAG
-	LPC_GPIO4->DIR |= (1 << 28);//lpsel3 FMC1JTAG
-	LPC_GPIO4->DIR |= (1 << 29);//lpsel4 FMC2 JTAG
-  	LPC_GPIO4->DIR |= (1 << 30);//lpsel5 RTM JTAG
-  	LPC_GPIO4->DIR |= (1 << 31);//lpsel6 PS JTAG
-  	LPC_GPIO4->DIR |= (1 << 19);//stitcher mode
+	LPC_GPIO0->DIR |= (1 << 23); 		// Switch RESETn
+	LPC_GPIO4->SET |= (1 << 18); 		//initialize SCANSTA
+	LPC_GPIO4->DIR |= (1 << 18);		// scansta  reset
+	LPC_GPIO4->DIR |= (1 << 25);		//lpsel0 PROG master
+	LPC_GPIO4->DIR |= (1 << 26);		//lpsel1 MMC JTAG
+	LPC_GPIO4->DIR |= (1 << 27);		//lpsel2 FPGA JTAG
+	LPC_GPIO4->DIR |= (1 << 28);		//lpsel3 FMC1JTAG
+	LPC_GPIO4->DIR |= (1 << 29);		//lpsel4 FMC2 JTAG
+  	LPC_GPIO4->DIR |= (1 << 30);		//lpsel5 RTM JTAG
+  	LPC_GPIO4->DIR |= (1 << 31);		//lpsel6 PS JTAG
+  	LPC_GPIO4->DIR |= (1 << 19);		//stitcher mode
   	LPC_GPIO0->DIR &= ~(1 << 29);     // Make  the Port pin input - RTM present
   	LPC_GPIO0->DIR &= ~(1 << 5);     // Make  the Port pins inputs - DONE pin
 
@@ -776,7 +891,7 @@ int main(void)
 	//init_PHY();
 
   // set correct levels on clock management i2c extender
-	i2c_TCA9539(CLK_SI57X_OE2 | CLK_CLK_SW_RSTn | CLK_SI57X_OE1 | CLK_SI53xx_RST); // setup the clock circuit mux
+//	i2c_TCA9539(CLK_SI57X_OE2 | CLK_CLK_SW_RSTn | CLK_SI57X_OE1 | CLK_SI53xx_RST); // setup the clock circuit mux
 //	i2c_TCA9539( CLK_CLK_SW_RSTn  | CLK_SI53xx_RST); // set all ones on clock circuit mux
 
 	//write SI5324 register values
@@ -816,21 +931,16 @@ int main(void)
            LPC_GPIO0->CLR |= (1 << 23);
            delay_ms(200);
            LPC_GPIO0->SET |= (1 << 23);
-//           spi_flash_tests();
-//           phy_init();
-//           phy_scan();
-//
-//           delay_ms(5000);
 //
 //
-////       for (int j = 0x10; j < 0x17; j++)
-////       {
-////    	   delay_ms(5);
-////    	   uint32_t val = read_PHY(j, 0x00);
-////    	   printf("Link [%d] = %d\r\n", j, (val >> 11) & 0x01);
-////    	   printf("CMode [%d] = %d\r\n", j, val & 0b1111);
-////    	   printf("==============\r\n");
-////       }
+//       for (int j = 0x10; j < 0x17; j++)
+//       {
+//    	   delay_ms(5);
+//    	   uint32_t val = read_PHY(21, 0x00);
+//    	   printf("Link [%d] = %d\r\n", 21, (val >> 11) & 0x01);
+//    	   printf("CMode [%d] = %d\r\n", 21, val & 0b1111);
+//    	   printf("==============\r\n");
+//       }
 ////
 ////       uint16_t val = read_PHY(21, 0x01);
 ////       printf("PHY [0x%02X] Reg %X = %d\r\n", 21, 0x01, val);
@@ -843,56 +953,25 @@ int main(void)
 ////	   printf("PHY [0x%02X] Reg %X = %d\r\n", 21, 0x01, val);
 //
 //
-////         force link down
-//	   uint16_t ret = read_PHY(21, 0x01);
-//	   printf("Link forced value %d\r\n", ret);
-//	   ret &= ~(1 << 5); // bit 4 = 1 forced link down
-//	   ret |= (1 << 4); // bit 5 = 1 enable @up setting
-//	   write_PHY(21, 0x01, ret);
-//
-//	   delay_ms(10);
-//
-//	   // force 10mbs
-//	   ret = read_PHY(21, 0x01);
-//
-//	   ret &= ~(1 << 7);
-//	   ret |= (1 << 6);
-//
-//	   ret &= ~(1 << 3);
-//	   ret |= (1 << 2);
-//
-//	   ret &= ~(1 << 0);
-//	   ret &= ~(1 << 1);
-//	   write_PHY(21, 0x01, ret);
-//	   delay_ms(10);
-//
-//	   ret = read_PHY(21, 0x01);
-//	   printf("Link forced value %d\r\n", ret);
-//
-//	   delay_ms(10);
-//
-//	   write_PHY(21, 0x01, ret);
-//	   ret = read_PHY(21, 0x01);
-//	   ret |= (1 << 5); // force link up
-//	   write_PHY(21, 0x01, ret);
 
-       // enable RSVD2CPU
+
+//       // enable RSVD2CPU
 //	   uint8_t addr_mask = read_PHY(0x1C, 0x02);
 //	   printf("Register map %d\r\n", addr_mask);
 //       write_PHY(0x1C, 0x02, 0xFFFF);
 //
 //       addr_mask = read_PHY(0x1C, 0x02);
 //       printf("Register map %d\r\n", addr_mask);
-//
+
 //       // enable RSVD2CPU bit
 //       uint8_t mgmt_mask = read_PHY(0x1C, 0x05);
 //       printf("mgmt mask %d\r\n", addr_mask);
 //       mgmt_mask |= (1 << 3);
 //       write_PHY(0x1C, 0x05, mgmt_mask);
-//
+
 //       mgmt_mask = read_PHY(0x1C, 0x05);
 //       printf("mgmt mask %d\r\n", addr_mask);
-//
+
 //       for (int i = 0; i < 33; i++)
 //       {
 ////	   write_PHY(i, 22, 0x00);
@@ -902,16 +981,17 @@ int main(void)
 //		   printf("PHY [0x%02X] Reg %X = %d\r\n", i, j, val);
 //	   }
 //       }
-//	   delay_ms(1);
+	   delay_ms(1);
 
 	/* First record in log also initialize it */
  	printf("Started. CPU clock = %lu MHz, SDRAM clock = %lu Mhz\n", SystemCoreClock / 1000000u, EMCClock / 1000000u);
 
 	/* Add another thread for initializing physical interface. This
 	   is delayed from the main LWIP initialization. */
-	xTaskCreate(vSetupIFTask, (signed char *) "SetupIFx", configMINIMAL_STACK_SIZE, NULL, (tskIDLE_PRIORITY + 2UL), (xTaskHandle *) NULL);
+//	xTaskCreate(vSetupIFTask, (signed char *) "SetupIFx", configMINIMAL_STACK_SIZE, NULL, (tskIDLE_PRIORITY + 2UL), (xTaskHandle *) NULL);
 	//blink LED task
 	xTaskCreate(vblinkIFTask, "Blink", configMINIMAL_STACK_SIZE, NULL, (tskIDLE_PRIORITY + 1UL), (xTaskHandle *) NULL);
+//	xTaskCreate(vblinkIFTask2, "Blink", configMINIMAL_STACK_SIZE, NULL, (tskIDLE_PRIORITY + 1UL), (xTaskHandle *) NULL);
 //	xTaskCreate(vCommandConsoleTask, "CLI", configMINIMAL_STACK_SIZE + 256UL, NULL, tskIDLE_PRIORITY + 1, NULL );
 
 	vTaskStartScheduler();

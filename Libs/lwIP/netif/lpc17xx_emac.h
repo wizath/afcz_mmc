@@ -679,6 +679,9 @@ Bool EMAC_CheckTransmitIndex(void);
 void EMAC_UpdateRxConsumeIndex(void);
 void EMAC_UpdateTxProduceIndex(void);
 
+int32_t write_PHY(uint16_t bPhyAddr, uint32_t PhyReg, uint16_t Value);
+int32_t read_PHY (uint16_t bPhyAddr, uint32_t PhyReg);
+
 FlagStatus EMAC_CheckReceiveDataStatus(uint32_t ulRxStatType);
 uint32_t EMAC_GetReceiveDataSize(void);
 FlagStatus EMAC_GetWoLStatus(uint32_t ulWoLMode);

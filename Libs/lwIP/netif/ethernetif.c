@@ -79,6 +79,8 @@
 #define IFNAME0 'e'
 #define IFNAME1 'l'
 
+extern void print_stat_info(void);
+
 /* When a packet is ready to be sent, if it cannot be sent immediately then
  * the task performing the transmit will block for netifTX_BUFFER_FREE_WAIT
  * milliseconds.  It will do this a maximum of netifMAX_TX_ATTEMPTS before
@@ -130,6 +132,8 @@ static struct netif *pxNetIfInUse = NULL;
  * @param pxNetIf the already initialized lwip network interface structure
  *		for this etherpxNetIf
  */
+
+extern void configure_phy(void);
 static void prvLowLevelInit( struct netif *pxNetIf )
 {
 portBASE_TYPE xStatus;
@@ -163,21 +167,22 @@ EMAC_CFG_Type Emac_Config;
 	 */
 	/* on rev. 'A' and later, P1.6 should NOT be set. */
 	PINSEL_ConfigPin(1, 0, 1); // txd0
-	PINSEL_ConfigPin(1, 1, 1); // rxd1
-	PINSEL_ConfigPin(1, 2, 1); // txd2
-	PINSEL_ConfigPin(1, 3, 1); // txd3
-
+	PINSEL_ConfigPin(1, 1, 1); // txd1
+//	PINSEL_ConfigPin(1, 2, 1); // txd2
+//	PINSEL_ConfigPin(1, 3, 1); // txd3
+//
 	PINSEL_ConfigPin(1, 4, 1); // tx_en
-	PINSEL_ConfigPin(1, 6, 1); // tx_clk
+//	PINSEL_ConfigPin(1, 5, 1); // tx_err
+//	PINSEL_ConfigPin(1, 6, 1); // tx_clk
 //	PINSEL_ConfigPin(1, 7, 1); // col
 	PINSEL_ConfigPin(1, 8, 1); // crs
-
+//
 	PINSEL_ConfigPin(1, 9, 1); // rxd0
 	PINSEL_ConfigPin(1, 10, 1); // rxd1
-	PINSEL_ConfigPin(1, 11, 1); // rxd2
-	PINSEL_ConfigPin(1, 12, 1); // rxd3
-	PINSEL_ConfigPin(1, 13, 1); // rx_dv
-
+//	PINSEL_ConfigPin(1, 11, 1); // rxd2
+//	PINSEL_ConfigPin(1, 12, 1); // rxd3
+//	PINSEL_ConfigPin(1, 13, 1); // rx_dv
+//
 	PINSEL_ConfigPin(1, 14, 1); // rx_err
 	PINSEL_ConfigPin(1, 15, 1); // rx_clk
 	PINSEL_ConfigPin(1, 16, 1); // mdc
@@ -198,11 +203,14 @@ EMAC_CFG_Type Emac_Config;
 	Emac_Config.pbEMAC_Addr = pxNetIf->hwaddr;
 	xStatus = EMAC_Init( &Emac_Config );
 
+	delay_ms(100);
+	configure_phy();
+
 	if( xStatus != ERROR )
 	{
 		printf("init no err\r\n");
 		/* Enable the interrupt and set its priority to the minimum
-		interrupt priority.  */
+		   interrupt priority.  */
 		pxNetIfInUse = pxNetIf;
 		NVIC_SetPriority( ENET_IRQn, configEMAC_INTERRUPT_PRIORITY );
 		NVIC_EnableIRQ( ENET_IRQn );
@@ -452,6 +460,25 @@ struct eth_hdr *pxHeader;
 	xInsideISR++;
 
 	printf("ENET INTSTATUS %d\r\n", LPC_EMAC->IntStatus);
+//	printf("TSV0 %d TSV1 %d\r\n", LPC_EMAC->TSV0, LPC_EMAC->TSV1);
+	uint32_t ret = LPC_EMAC->TSV0;
+	if (ret & 0x01) printf("CRCERR\r\n");
+	if (ret & 0x02) printf("LCE\r\n");
+	if (ret & 0x04) printf("LOR\r\n");
+	if (ret & 0x08) printf("DONE\r\n");
+	if (ret & 0x10) printf("MULTICAST\r\n");
+	if (ret & 0x20) printf("BROADCAST\r\n");
+	if (ret & 0x40) printf("PACKETDEFER\r\n");
+	if (ret & 0x80) printf("EXDF\r\n");
+	if (ret & 0x100) printf("EXCOL\r\n");
+	if (ret & 0x200) printf("LCOL\r\n");
+	if (ret & 0x400) printf("GIANT\r\n");
+	if (ret & 0x800) printf("UNDERRUN\r\n");
+	if (ret & 0x10000000) printf("CONTROLFRAME\r\n");
+	if (ret & 0x20000000) printf("PAUSE\r\n");
+	if (ret & 0x40000000) printf("BACKPRESSURE\r\n");
+	if (ret & 0x80000000) printf("VLAN\r\n");
+	printf("========================\r\n");
 
 	while( ( ulInterruptCause = LPC_EMAC->IntStatus ) != 0 )
 	{
