@@ -317,7 +317,7 @@ Status EMAC_Init(EMAC_CFG_Type *EMAC_ConfigStruct)
 
 	/* Initialize MAC control registers. */
 	LPC_EMAC->MAC1 = EMAC_MAC1_PASS_ALL;
-	LPC_EMAC->MAC2 = EMAC_MAC2_CRC_EN | EMAC_MAC2_PAD_EN;// | EMAC_MAC2_FULL_DUP;
+	LPC_EMAC->MAC2 = EMAC_MAC2_CRC_EN | EMAC_MAC2_PAD_EN | EMAC_MAC2_FULL_DUP;
 	LPC_EMAC->MAXF = EMAC_ETH_MAX_FLEN;
 
 	/*
@@ -344,7 +344,7 @@ Status EMAC_Init(EMAC_CFG_Type *EMAC_ConfigStruct)
 	LPC_EMAC->SUPP = EMAC_SUPP_RES_RMII;
 
 	for (tout = 100; tout; tout--);
-	LPC_EMAC->SUPP = 0; //0x00000100; // 100mbs
+	LPC_EMAC->SUPP = 0; // 10mbs //0x00000100; // 100mbs
 
 	// Set EMAC address
 	setEmacAddr(EMAC_ConfigStruct->pbEMAC_Addr);
@@ -366,10 +366,10 @@ Status EMAC_Init(EMAC_CFG_Type *EMAC_ConfigStruct)
 	LPC_EMAC->IntClear  = 0xFFFF;
 
 	/* Enable receive and transmit mode of MAC Ethernet core */
-	LPC_EMAC->Command  |= (EMAC_CR_TX_EN | EMAC_CR_RX_EN);// | EMAC_CR_FULL_DUP);
+	LPC_EMAC->Command  |= (EMAC_CR_TX_EN | EMAC_CR_RX_EN | EMAC_CR_FULL_DUP);
 	LPC_EMAC->MAC1     |= EMAC_MAC1_REC_EN;
 
-//	LPC_EMAC->IPGT     = EMAC_IPGT_FULL_DUP;
+	LPC_EMAC->IPGT     = EMAC_IPGT_FULL_DUP;
 
 	return SUCCESS;
 }
