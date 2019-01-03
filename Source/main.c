@@ -162,10 +162,10 @@ void configure_phy(void)
 	ret &= ~(1 << 1);
 
 //	flow control value
-//	ret |= (1 << 7);
+	ret |= (1 << 7);
 
 //	flow control enable
-//	ret |= (1 << 6);
+	ret |= (1 << 6);
 
 	// duplex = half
 //	ret &= ~(1 << 3);
@@ -993,7 +993,7 @@ int main(void)
 	xTaskCreate(vSetupIFTask, (signed char *) "SetupIFx", configMINIMAL_STACK_SIZE, NULL, (tskIDLE_PRIORITY + 2UL), (xTaskHandle *) NULL);
 	//blink LED task
 	xTaskCreate(vblinkIFTask, "Blink", configMINIMAL_STACK_SIZE, NULL, (tskIDLE_PRIORITY + 1UL), (xTaskHandle *) NULL);
-//	xTaskCreate(vblinkIFTask2, "Blink", configMINIMAL_STACK_SIZE, NULL, (tskIDLE_PRIORITY + 1UL), (xTaskHandle *) NULL);
+	xTaskCreate(vblinkIFTask2, "Blink", configMINIMAL_STACK_SIZE, NULL, (tskIDLE_PRIORITY + 1UL), (xTaskHandle *) NULL);
 //	xTaskCreate(vCommandConsoleTask, "CLI", configMINIMAL_STACK_SIZE + 256UL, NULL, tskIDLE_PRIORITY + 1, NULL );
 
 	vTaskStartScheduler();
