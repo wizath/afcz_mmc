@@ -61,37 +61,37 @@ void phy_init(void)
 	int32_t regv,tout, tmp;
 
 	// init pins
-//	PINSEL_ConfigPin(1, 0, 1);
-//	PINSEL_ConfigPin(1, 1, 1);
-//	PINSEL_ConfigPin(1, 4, 1);
-//	PINSEL_ConfigPin(1, 8, 1);
-//	PINSEL_ConfigPin(1, 9, 1);
-//	PINSEL_ConfigPin(1, 10, 1);
-//	PINSEL_ConfigPin(1, 14, 1);
-//	PINSEL_ConfigPin(1, 15, 1);
-//	PINSEL_ConfigPin(1, 16, 1);
-//	PINSEL_ConfigPin(1, 17, 1);
+	PINSEL_ConfigPin(1, 0, 1);
+	PINSEL_ConfigPin(1, 1, 1);
+	PINSEL_ConfigPin(1, 4, 1);
+	PINSEL_ConfigPin(1, 8, 1);
+	PINSEL_ConfigPin(1, 9, 1);
+	PINSEL_ConfigPin(1, 10, 1);
+	PINSEL_ConfigPin(1, 14, 1);
+	PINSEL_ConfigPin(1, 15, 1);
+	PINSEL_ConfigPin(1, 16, 1);
+	PINSEL_ConfigPin(1, 17, 1);
 
-	PINSEL_ConfigPin(1, 0, 1); // txd0
-	PINSEL_ConfigPin(1, 1, 1); // rxd1
-	PINSEL_ConfigPin(1, 2, 1); // txd2
-	PINSEL_ConfigPin(1, 3, 1); // txd3
-
-	PINSEL_ConfigPin(1, 4, 1); // tx_en
-	PINSEL_ConfigPin(1, 6, 1); // tx_clk
-	PINSEL_ConfigPin(1, 7, 1); // col
-	PINSEL_ConfigPin(1, 8, 1); // crs
-
-	PINSEL_ConfigPin(1, 9, 1); // rxd0
-	PINSEL_ConfigPin(1, 10, 1); // rxd1
-	PINSEL_ConfigPin(1, 11, 1); // rxd2
-	PINSEL_ConfigPin(1, 12, 1); // rxd3
-	PINSEL_ConfigPin(1, 13, 1); // rx_dv
-
-	PINSEL_ConfigPin(1, 14, 1); // rx_err
-	PINSEL_ConfigPin(1, 15, 1); // rx_clk
-	PINSEL_ConfigPin(1, 16, 1); // mdc
-	PINSEL_ConfigPin(1, 17, 1); // mdio
+//	PINSEL_ConfigPin(1, 0, 1); // txd0
+//	PINSEL_ConfigPin(1, 1, 1); // rxd1
+////	PINSEL_ConfigPin(1, 2, 1); // txd2
+////	PINSEL_ConfigPin(1, 3, 1); // txd3
+//
+//	PINSEL_ConfigPin(1, 4, 1); // tx_en
+//	PINSEL_ConfigPin(1, 6, 1); // tx_clk
+//	PINSEL_ConfigPin(1, 7, 1); // col
+//	PINSEL_ConfigPin(1, 8, 1); // crs
+//
+//	PINSEL_ConfigPin(1, 9, 1); // rxd0
+//	PINSEL_ConfigPin(1, 10, 1); // rxd1
+////	PINSEL_ConfigPin(1, 11, 1); // rxd2
+////	PINSEL_ConfigPin(1, 12, 1); // rxd3
+////	PINSEL_ConfigPin(1, 13, 1); // rx_dv
+//
+////	PINSEL_ConfigPin(1, 14, 1); // rx_err
+////	PINSEL_ConfigPin(1, 15, 1); // rx_clk
+//	PINSEL_ConfigPin(1, 16, 1); // mdc
+//	PINSEL_ConfigPin(1, 17, 1); // mdio
 
 	Emac_Config.PhyCfg.Mode = EMAC_MODE_AUTO;
 	EMAC_Init( &Emac_Config );
@@ -167,10 +167,10 @@ void configure_phy(void)
 //	ret |= (1 << 6);
 
 	// duplex = half
-//	ret &= ~(1 << 3);
+	ret &= ~(1 << 3);
 
 	// duplex full
-	ret |= (1 << 3);
+//	ret |= (1 << 3);
 
 	// force duplex enable
 	ret |= (1 << 2);
@@ -180,8 +180,9 @@ void configure_phy(void)
 //	ret |= (1 << 14);
 
 	// force 10mbs
-//	ret &= ~(1 << 0);
-//	ret &= ~(1 << 1);
+	ret &= ~(1 << 0);
+	ret &= ~(1 << 1);
+
 	write_PHY(21, 0x01, ret);
 	delay_ms(10);
 
@@ -378,7 +379,7 @@ static void vSetupIFTask(void *pvParameters) {
 
 	/* Initialize and start application */
 //	http_server_netconn_init();
-	bcast_task_start();
+//	bcast_task_start();
 
 	/* This loop monitors the PHY link and will handle cable events
 	   via the PHY driver. */
@@ -728,12 +729,13 @@ static void vblinkIFTask(void *pvParameters)
 			}
 			else if (Rxbuf[0] == 'R')
 			{
-				LPC_GPIO4->SET |= (1 << 9);
-				vTaskDelay(100);
-				LPC_GPIO4->CLR |= (1 << 9);
-				vTaskDelay(100);
-				LPC_GPIO4->SET |= (1 << 9);
-				printf("reset\r\n");
+				NVIC_SystemReset();
+//				LPC_GPIO4->SET |= (1 << 9);
+//				vTaskDelay(100);
+//				LPC_GPIO4->CLR |= (1 << 9);
+//				vTaskDelay(100);
+//				LPC_GPIO4->SET |= (1 << 9);
+//				printf("reset\r\n");
 			}
 		}
 	}
@@ -790,7 +792,7 @@ int main(void)
 	psu_init();
 	delay_ms(200);
 //	printf("xr start\r\n");
-//	xr77129_load_runtimes();
+	xr77129_load_runtimes();
 
 //	i2c_probe_slaves2(); // probe i2cmux slaves at every channel
 	printf("XR END\r\n");
@@ -988,7 +990,7 @@ int main(void)
 
 	/* Add another thread for initializing physical interface. This
 	   is delayed from the main LWIP initialization. */
-//	xTaskCreate(vSetupIFTask, (signed char *) "SetupIFx", configMINIMAL_STACK_SIZE, NULL, (tskIDLE_PRIORITY + 2UL), (xTaskHandle *) NULL);
+	xTaskCreate(vSetupIFTask, (signed char *) "SetupIFx", configMINIMAL_STACK_SIZE, NULL, (tskIDLE_PRIORITY + 2UL), (xTaskHandle *) NULL);
 	//blink LED task
 	xTaskCreate(vblinkIFTask, "Blink", configMINIMAL_STACK_SIZE, NULL, (tskIDLE_PRIORITY + 1UL), (xTaskHandle *) NULL);
 //	xTaskCreate(vblinkIFTask2, "Blink", configMINIMAL_STACK_SIZE, NULL, (tskIDLE_PRIORITY + 1UL), (xTaskHandle *) NULL);
