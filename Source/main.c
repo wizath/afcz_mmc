@@ -157,7 +157,8 @@ void configure_phy(void)
 	ret = read_PHY(21, 0x01);
 
 	// enable 100mbs
-	ret |= (1 << 0);
+	ret &= ~(1 << 12); // disable 200mbs
+	ret &= ~(1 << 0);
 	ret &= ~(1 << 1);
 
 //	flow control value
@@ -170,7 +171,7 @@ void configure_phy(void)
 //	ret &= ~(1 << 3);
 
 	// duplex full
-	ret |= (1 << 3);
+	ret &= ~(1 << 3);
 
 	// force duplex enable
 	ret |= (1 << 2);
@@ -182,6 +183,7 @@ void configure_phy(void)
 	// force 10mbs
 //	ret &= ~(1 << 0);
 //	ret &= ~(1 << 1);
+
 	write_PHY(21, 0x01, ret);
 	delay_ms(10);
 
@@ -378,7 +380,7 @@ static void vSetupIFTask(void *pvParameters) {
 
 	/* Initialize and start application */
 //	http_server_netconn_init();
-	bcast_task_start();
+//	bcast_task_start();
 
 	/* This loop monitors the PHY link and will handle cable events
 	   via the PHY driver. */
@@ -988,7 +990,7 @@ int main(void)
 
 	/* Add another thread for initializing physical interface. This
 	   is delayed from the main LWIP initialization. */
-//	xTaskCreate(vSetupIFTask, (signed char *) "SetupIFx", configMINIMAL_STACK_SIZE, NULL, (tskIDLE_PRIORITY + 2UL), (xTaskHandle *) NULL);
+	xTaskCreate(vSetupIFTask, (signed char *) "SetupIFx", configMINIMAL_STACK_SIZE, NULL, (tskIDLE_PRIORITY + 2UL), (xTaskHandle *) NULL);
 	//blink LED task
 	xTaskCreate(vblinkIFTask, "Blink", configMINIMAL_STACK_SIZE, NULL, (tskIDLE_PRIORITY + 1UL), (xTaskHandle *) NULL);
 //	xTaskCreate(vblinkIFTask2, "Blink", configMINIMAL_STACK_SIZE, NULL, (tskIDLE_PRIORITY + 1UL), (xTaskHandle *) NULL);
