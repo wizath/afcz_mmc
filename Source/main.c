@@ -167,10 +167,10 @@ void configure_phy(void)
 //	ret |= (1 << 6);
 
 	// duplex = half
-	ret &= ~(1 << 3);
+//	ret &= ~(1 << 3);
 
 	// duplex full
-//	ret |= (1 << 3);
+	ret |= (1 << 3);
 
 	// force duplex enable
 	ret |= (1 << 2);
@@ -182,6 +182,10 @@ void configure_phy(void)
 	// force 10mbs
 	ret &= ~(1 << 0);
 	ret &= ~(1 << 1);
+
+	// force 100mbs
+//	ret &= ~(1 << 0);
+//	ret |= (1 << 1);
 
 	write_PHY(21, 0x01, ret);
 	delay_ms(10);
