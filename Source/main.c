@@ -161,10 +161,10 @@ void configure_phy(void)
 	ret &= ~(1 << 1);
 
 //	flow control value
-//	ret |= (1 << 7);
+	ret |= (1 << 7);
 
 //	flow control enable
-//	ret |= (1 << 6);
+	ret |= (1 << 6);
 
 	// duplex = half
 //	ret &= ~(1 << 3);
